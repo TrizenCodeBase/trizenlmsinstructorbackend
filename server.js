@@ -1,4 +1,3 @@
-
 import express from 'express';
 import morgan from 'morgan';
 import multer from 'multer';
@@ -9,18 +8,23 @@ import courseRouter from './routes/course.js';
 import path from 'path';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
-const cors = require('cors');
+import cors from 'cors';
 
 // Load environment variables
 dotenv.config();
- const corsOptions = {
+
+const app = express();
+
+// CORS Configuration
+const corsOptions = {
     origin: 'https://instructor.lms.trizenventures.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept']
 };
+
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions));
+
 // Connect to MongoDB with improved error handling
 const connectDB = async () => {
   try {
@@ -36,21 +40,10 @@ const connectDB = async () => {
 // Call the connect function
 connectDB();
 
-const app = express();
-
 app.use(express.json({
   limit: '1000MB',
 }));
 
-// Enable CORS for all routes
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  next();
-});
-
-app.use(cors());
 app.use(morgan('dev'));
 
 // Error handling middleware
