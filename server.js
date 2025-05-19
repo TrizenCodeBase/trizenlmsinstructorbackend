@@ -76,7 +76,7 @@ app.use('/api/auth', authRouter);
 app.use('/api', videoRouter);
 app.use('/api', courseRouter);
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 5001;
 app.listen(port, () => {
   console.log(`app running on port: ${port}`);
 });
