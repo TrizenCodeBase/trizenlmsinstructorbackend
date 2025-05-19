@@ -293,7 +293,7 @@ router.post('/upload', upload.single('video'), async (req, res) => {
                     usingFallback = true;
                     // Use a safe fallback URL
                     const protocol = minioClient.endPoint?.includes('localhost') ? 'http' : 'https';
-                    videoUrl = `${protocol}://${minioClient.endPoint || 'localhost:9000'}/${bucketName}/${fileName}`;
+                    videoUrl = `${protocol}://lmsbackendminio-api.llp.trizenventures.com/${bucketName}/${fileName}`;
                     console.log('Using fallback URL:', videoUrl);
                   }
             
@@ -303,7 +303,7 @@ router.post('/upload', upload.single('video'), async (req, res) => {
             // Update fallback URL to use HTTPS
           // Replace the videoUrl generation in the catch block
           videoUrl = minioClient.endPoint 
-            ? `https://${minioClient.endPoint}/${bucketName}/${fileName}`
+            ? `https://lmsbackendminio-api.llp.trizenventures.com/${bucketName}/${fileName}`
             : `http://localhost:9000/${bucketName}/${fileName}`;
           console.log('Using fallback URL:', videoUrl);
           } catch (minioError) {
