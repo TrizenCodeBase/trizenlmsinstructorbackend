@@ -1,7 +1,6 @@
 
 import express from 'express';
 import morgan from 'morgan';
-import cors from 'cors';
 import multer from 'multer';
 import dotenv from 'dotenv';
 import videoRouter from './routes/video.js';
@@ -10,10 +9,18 @@ import courseRouter from './routes/course.js';
 import path from 'path';
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken';
+const cors = require('cors');
 
 // Load environment variables
 dotenv.config();
-
+ const corsOptions = {
+    origin: 'https://instructor.lms.trizenventures.com',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 // Connect to MongoDB with improved error handling
 const connectDB = async () => {
   try {
