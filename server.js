@@ -20,10 +20,22 @@ const corsOptions = {
     origin: 'https://instructor.lms.trizenventures.com',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept']
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
+    optionsSuccessStatus: 204
 };
 
+// Enable pre-flight requests for all routes
+app.options('*', cors(corsOptions));
+
+// Apply CORS middleware
 app.use(cors(corsOptions));
+
+// Ensure CORS headers are set for all responses
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Origin', 'https://instructor.lms.trizenventures.com');
+    next();
+});
 
 // Connect to MongoDB with improved error handling
 const connectDB = async () => {
