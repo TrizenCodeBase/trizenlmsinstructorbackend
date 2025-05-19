@@ -15,19 +15,21 @@ dotenv.config();
 
 const app = express();
 
-// CORS Configuration - Must be before any other middleware
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://instructor.lms.trizenventures.com");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// CORS Configuration
+const corsOptions = {
+  origin: 'https://instructor.lms.trizenventures.com',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+// Apply CORS middleware before any routes
+app.use(cors(corsOptions));
+
+// Handle OPTIONS preflight requests
+app.options('*', cors(corsOptions));
 
 // Connect to MongoDB with improved error handling
 const connectDB = async () => {
@@ -44,6 +46,7 @@ const connectDB = async () => {
 // Call the connect function
 connectDB();
 
+// Parse JSON bodies
 app.use(express.json({
   limit: '1000MB',
 }));
