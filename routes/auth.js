@@ -1,14 +1,30 @@
-
 import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import dotenv from 'dotenv';
+import cors from 'cors';
 
 dotenv.config();
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+// CORS configuration for auth routes
+const corsOptions = {
+  origin: 'https://instructor.lms.trizenventures.com',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+// Apply CORS specifically for auth routes
+router.use(cors(corsOptions));
+
+// Handle OPTIONS preflight requests
+router.options('*', cors(corsOptions));
 
 // Authentication middleware
 export const authenticate = (req, res, next) => {
@@ -62,6 +78,10 @@ router.post('/login', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '1d' }
     );
+
+    // Set CORS headers explicitly for this response
+    res.header('Access-Control-Allow-Origin', 'https://instructor.lms.trizenventures.com');
+    res.header('Access-Control-Allow-Credentials', 'true');
 
     res.json({
       token,
