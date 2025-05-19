@@ -32,9 +32,14 @@ app.use(cors(corsOptions));
 
 // Ensure CORS headers are set for all responses
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Origin', 'https://instructor.lms.trizenventures.com');
-    next();
+  res.header("Access-Control-Allow-Origin", "https://instructor.lms.trizenventures.com"); // 👈 Must be specific, not *
+  res.header("Access-Control-Allow-Credentials", "true"); // 👈 Needed for cookies/auth
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
 });
 
 // Connect to MongoDB with improved error handling
