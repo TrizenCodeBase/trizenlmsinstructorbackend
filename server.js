@@ -15,27 +15,14 @@ dotenv.config();
 
 const app = express();
 
-// CORS Configuration
-const corsOptions = {
-    origin: 'https://instructor.lms.trizenventures.com',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
-    optionsSuccessStatus: 204
-};
-
-// Enable pre-flight requests for all routes
-app.options('*', cors(corsOptions));
-
-// Apply CORS middleware
-app.use(cors(corsOptions));
-
-// Ensure CORS headers are set for all responses
+// CORS Configuration - Must be before any other middleware
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://instructor.lms.trizenventures.com"); // 👈 Must be specific, not *
-  res.header("Access-Control-Allow-Credentials", "true"); // 👈 Needed for cookies/auth
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Origin", "https://instructor.lms.trizenventures.com");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
