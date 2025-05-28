@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import { uploadProfilePicture, handleMulterError } from '../middleware/uploadMiddleware.js';
+import { uploadProfilePicture as uploadToMinio } from '../utils/minioClient.js';
 
 dotenv.config();
 
@@ -258,6 +260,41 @@ router.get('/me', authenticate, async (req, res) => {
     console.error('Get user error:', error);
     res.status(500).json({ message: 'Server error' });
   }
+});
+
+// Profile picture upload route
+router.post('/upload-profile-picture', authenticate, uploadProfilePicture, handleMulterError, async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const userId = req.user.id;
+        const file = req.file;
+
+        // Upload to MinIO and get the complete URL
+        const profilePictureUrl = await uploadToMinio(file, file.originalname);
+        console.log('Profile picture URL:', profilePictureUrl); // Debug log
+
+        // Update user's profile picture in database
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { profilePicture: profilePictureUrl },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json({
+            message: 'Profile picture uploaded successfully',
+            profilePicture: profilePictureUrl
+        });
+    } catch (error) {
+        console.error('Profile picture upload error:', error);
+        res.status(500).json({ message: 'Failed to upload profile picture' });
+    }
 });
 
 export default router;

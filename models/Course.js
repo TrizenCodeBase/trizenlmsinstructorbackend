@@ -87,6 +87,17 @@ const courseSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Drop existing indexes and create new ones
+courseSchema.pre('save', async function(next) {
+  try {
+    const model = mongoose.model('Course');
+    await model.collection.dropIndexes();
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
+
 const Course = mongoose.model('Course', courseSchema);
 
 export default Course;
