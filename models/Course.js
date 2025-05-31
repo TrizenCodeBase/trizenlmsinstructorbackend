@@ -49,6 +49,7 @@ const roadmapDaySchema = new mongoose.Schema({
 const courseSchema = new mongoose.Schema({
   image: { type: String, required: true },
   title: { type: String, required: true },
+  courseUrl: { type: String, unique: true },
   description: { type: String, required: true },
   longDescription: { type: String },
   instructor: { type: String, required: true },

@@ -26,6 +26,30 @@ const userSchema = new mongoose.Schema({
     enum: ['student', 'instructor', 'admin'],  // Added 'instructor' role
     default: 'student'
   },
+  referralCode: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    sparse: true
+  },
+  referralCount: {
+    type: Number,
+    default: 0
+  },
+  referralHistory: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   bio: {
     type: String,
     default: ''
