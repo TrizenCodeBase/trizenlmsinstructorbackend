@@ -11,9 +11,10 @@ dotenv.config();
 const app = express();
 
 // Middleware
-// app.use(cors());
 app.use(cors({
-  origin: 'https://instructor.lms.trizenventures.com', // Allow frontend origin
+  origin: process.env.NODE_ENV === 'production' 
+    ? 'https://instructor.lms.trizenventures.com'
+    : ['http://localhost:5173', 'https://instructor.lms.trizenventures.com'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
