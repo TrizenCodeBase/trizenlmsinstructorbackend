@@ -1,8 +1,8 @@
 import express from 'express';
 import Course from '../models/Course.js';
-import { authenticate } from './auth.js';
 import UserCourse from '../models/UserCourse.js';
 import User from '../models/User.js';
+import { authenticate } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -11,7 +11,6 @@ router.post('/courses', authenticate, async (req, res) => {
   try {
     // Check if user is an instructor
     if (!req.user || req.user.role !== 'instructor') {
-      console.error('Unauthorized attempt to create course:', { user: req.user });
       return res.status(403).json({ message: 'Only instructors can create courses' });
     }
 
@@ -145,53 +144,181 @@ router.get('/courses/:id', async (req, res) => {
 // Update a course (protected - only for course instructor)
 router.put('/courses/:id', authenticate, async (req, res) => {
   try {
+    // Log request details
+    console.log('Update course request:', {
+      courseId: req.params.id,
+      userId: req.user.id,
+      userRole: req.user.role
+    });
+
     const course = await Course.findById(req.params.id);
     
     if (!course) {
+      console.log('Course not found:', req.params.id);
       return res.status(404).json({ message: 'Course not found' });
     }
+
+    // Log course and user details
+    console.log('Course and user details:', {
+      courseInstructorId: course.instructorId.toString(),
+      requestUserId: req.user.id,
+      isMatch: course.instructorId.toString() === req.user.id.toString()
+    });
     
     // Check if user is the course instructor
-    if (course.instructorId.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'You can only update your own courses' });
+    if (course.instructorId.toString() !== req.user.id.toString()) {
+      console.log('Unauthorized update attempt:', {
+        courseId: req.params.id,
+        courseInstructorId: course.instructorId.toString(),
+        requestUserId: req.user.id.toString()
+      });
+      return res.status(403).json({ 
+        message: 'You can only update your own courses',
+        debug: {
+          courseInstructorId: course.instructorId.toString(),
+          requestUserId: req.user.id.toString(),
+          userRole: req.user.role
+        }
+      });
+    }
+
+    // Validate required fields if they are being updated
+    const requiredFields = [
+      'title',
+      'description',
+      'instructor',
+      'duration',
+      'level',
+      'category',
+      'language',
+      'image',
+      'roadmap'
+    ];
+
+    const updatedFields = Object.keys(req.body);
+    const missingFields = requiredFields.filter(field => 
+      updatedFields.includes(field) && !req.body[field]
+    );
+
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        message: `Missing required fields: ${missingFields.join(', ')}`
+      });
+    }
+
+    // If updating roadmap, validate it
+    if (req.body.roadmap) {
+      if (!Array.isArray(req.body.roadmap) || req.body.roadmap.length === 0) {
+        return res.status(400).json({ 
+          message: 'Course roadmap must have at least one day'
+        });
+      }
     }
     
     const updatedCourse = await Course.findByIdAndUpdate(
       req.params.id,
       { $set: req.body },
-      { new: true }
+      { new: true, runValidators: true }
     );
     
+    console.log('Course updated successfully:', updatedCourse._id);
+
     res.json({
       message: 'Course updated successfully',
       course: updatedCourse
     });
   } catch (error) {
     console.error('Update course error:', error);
-    res.status(500).json({ message: 'Server error' });
+
+    // Handle validation errors
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        message: 'Validation error',
+        errors: Object.values(error.errors).map(err => err.message)
+      });
+    }
+
+    res.status(500).json({ 
+      message: 'Failed to update course',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 
 // Delete a course (protected - only for course instructor)
 router.delete('/courses/:id', authenticate, async (req, res) => {
   try {
+    // Log request details
+    console.log('Delete course request:', {
+      courseId: req.params.id,
+      userId: req.user.id,
+      userRole: req.user.role,
+      headers: req.headers
+    });
+
     const course = await Course.findById(req.params.id);
     
     if (!course) {
+      console.log('Course not found:', req.params.id);
       return res.status(404).json({ message: 'Course not found' });
     }
     
+    // Log course and user details
+    console.log('Course and user details:', {
+      courseInstructorId: course.instructorId?.toString(),
+      requestUserId: req.user.id,
+      isMatch: course.instructorId?.toString() === req.user.id.toString(),
+      courseTitle: course.title,
+      instructorName: course.instructor
+    });
+
     // Check if user is the course instructor
-    if (course.instructorId.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'You can only delete your own courses' });
+    if (!course.instructorId || course.instructorId.toString() !== req.user.id.toString()) {
+      console.log('Unauthorized delete attempt:', {
+        courseId: req.params.id,
+        courseInstructorId: course.instructorId?.toString(),
+        requestUserId: req.user.id,
+        userRole: req.user.role,
+        mismatchReason: !course.instructorId ? 'No instructorId on course' : 'instructorId does not match user'
+      });
+      return res.status(403).json({ 
+        message: 'You can only delete your own courses',
+        debug: {
+          courseInstructorId: course.instructorId?.toString(),
+          requestUserId: req.user.id.toString(),
+          userRole: req.user.role,
+          mismatchReason: !course.instructorId ? 'No instructorId on course' : 'instructorId does not match user'
+        }
+      });
+    }
+
+    // Check if course has enrolled students
+    const enrolledStudents = await UserCourse.countDocuments({ courseId: req.params.id });
+    console.log('Enrolled students check:', {
+      courseId: req.params.id,
+      enrolledCount: enrolledStudents
+    });
+    
+    if (enrolledStudents > 0) {
+      return res.status(400).json({ 
+        message: 'Cannot delete course with enrolled students',
+        enrolledCount: enrolledStudents
+      });
     }
     
     await Course.findByIdAndDelete(req.params.id);
+    console.log('Course deleted successfully:', req.params.id);
     
-    res.json({ message: 'Course deleted successfully' });
+    res.json({ 
+      message: 'Course deleted successfully',
+      courseId: req.params.id
+    });
   } catch (error) {
     console.error('Delete course error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      message: 'Failed to delete course',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 });
 

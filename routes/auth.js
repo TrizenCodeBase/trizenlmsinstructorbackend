@@ -30,19 +30,37 @@ router.use(cors(corsOptions));
 router.options('*', cors(corsOptions));
 
 // Authentication middleware
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
+  try {
+    // Get token from header
   const token = req.header('Authorization')?.replace('Bearer ', '');
   
   if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+      return res.status(401).json({ message: 'No authentication token, access denied' });
   }
 
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    // Get user from database
+    const user = await User.findById(decoded.id).select('-password');
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Token is valid but user not found' });
+    }
+
+    // Add user info to request
+    req.user = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role
+    };
+
     next();
-  } catch (err) {
-    res.status(401).json({ message: 'Token is not valid' });
+  } catch (error) {
+    console.error('Authentication error:', error);
+    res.status(401).json({ message: 'Token is invalid or expired' });
   }
 };
 

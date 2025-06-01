@@ -12,6 +12,12 @@ const app = express();
 
 // Middleware
 app.use(cors());
+// app.use(cors({
+//   origin: 'http://localhost:8080', // Allow frontend origin
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization']
+// }));
 app.use(express.json());
 
 // Routes
@@ -26,11 +32,12 @@ app.use((err, req, res, next) => {
 });
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI )
+// || 'mongodb+srv://user:user@cluster0.jofrcro.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
-const PORT = process.env.PORT || 5000;
+const PORT = 3000; // Set port to match frontend's expected port
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 }); 

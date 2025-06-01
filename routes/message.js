@@ -5,6 +5,101 @@ import { isValidObjectId } from 'mongoose';
 
 const router = express.Router();
 
+// Get all conversations for a user
+router.get('/messages/conversations', authenticate, async (req, res) => {
+  try {
+    // Find all unique conversations where user is either sender or receiver
+    const conversations = await Message.aggregate([
+      {
+        $match: {
+          $or: [
+            { senderId: req.user.id },
+            { receiverId: req.user.id }
+          ]
+        }
+      },
+      {
+        $sort: { createdAt: -1 }
+      },
+      {
+        $group: {
+          _id: {
+            $cond: [
+              { $eq: ["$senderId", req.user.id] },
+              "$receiverId",
+              "$senderId"
+            ]
+          },
+          courseId: { $first: "$courseId" },
+          lastMessage: { $first: "$content" },
+          updatedAt: { $first: "$createdAt" },
+          unreadCount: {
+            $sum: {
+              $cond: [
+                { 
+                  $and: [
+                    { $eq: ["$receiverId", req.user.id] },
+                    { $eq: ["$read", false] }
+                  ]
+                },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "partner"
+        }
+      },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "courseId",
+          foreignField: "_id",
+          as: "course"
+        }
+      },
+      {
+        $unwind: "$partner"
+      },
+      {
+        $unwind: "$course"
+      },
+      {
+        $project: {
+          _id: 1,
+          partner: {
+            _id: "$partner._id",
+            name: "$partner.name",
+            email: "$partner.email"
+          },
+          course: {
+            _id: "$course._id",
+            title: "$course.title"
+          },
+          lastMessage: 1,
+          unreadCount: 1,
+          updatedAt: 1
+        }
+      },
+      {
+        $sort: { updatedAt: -1 }
+      }
+    ]);
+
+    res.json(conversations);
+  } catch (error) {
+    console.error('Get conversations error:', error);
+    res.status(500).json({ message: 'Failed to get conversations' });
+  }
+});
+
 // Send a new message
 router.post('/messages', authenticate, async (req, res) => {
   try {
