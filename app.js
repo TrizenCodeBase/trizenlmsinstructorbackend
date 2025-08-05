@@ -32,7 +32,7 @@ const upload = multer({
 
 // Enhanced CORS configuration
 app.use(cors({
-  origin: 'https://instructor.lms.trizenventures.com',
+  origin: 'http://localhost:8080/',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [

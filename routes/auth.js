@@ -14,8 +14,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // CORS configuration for auth routes
 const corsOptions = {
-  origin: 'https://instructor.lms.trizenventures.com',
-  // origin: '*',
+  origin: [
+    'https://instructor.lms.trizenventures.com',
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
@@ -101,8 +105,16 @@ router.post('/login', async (req, res) => {
     );
 
     // Set CORS headers explicitly for this response
-    res.header('Access-Control-Allow-Origin', 'https://instructor.lms.trizenventures.com');
-    // res.header('Access-Control-Allow-Origin', '*');
+    const allowedOrigins = [
+      'https://instructor.lms.trizenventures.com',
+      'http://localhost:8080',
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
     res.header('Access-Control-Allow-Credentials', 'true');
 
     res.json({

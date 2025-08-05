@@ -23,7 +23,12 @@ const app = express();
 
 // CORS Configuration
 const corsOptions = {
-  origin:  'https://instructor.lms.trizenventures.com',
+  origin: [
+    'https://instructor.lms.trizenventures.com',
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://localhost:5173'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin'],
