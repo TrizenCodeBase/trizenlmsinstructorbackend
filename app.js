@@ -31,9 +31,21 @@ const upload = multer({
   }
 });
 
-// Enhanced CORS configuration
+// Enhanced CORS configuration (allow prod and local dev)
+const allowedOrigins = [
+  'https://instructor.lms.trizenventures.com',
+  'http://localhost:8080',
+  'http://localhost:3000'
+];
+
 app.use(cors({
-  origin: 'http://localhost:8080/',
+  origin: (origin, callback) => {
+    // Allow non-browser requests or same-origin
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
