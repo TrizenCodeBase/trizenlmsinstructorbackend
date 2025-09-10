@@ -7,6 +7,7 @@ import path from 'path';
 import authRoutes from './routes/auth.js';
 import courseRoutes from './routes/course.js';
 import messageRoutes from './routes/message.js';
+import multipartRoutes from './routes/multipart.js';
 import UserCourse from './models/UserCourse.js';
 
 dotenv.config();
@@ -72,6 +73,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api', authRoutes);
 app.use('/api', courseRoutes);
 app.use('/api', messageRoutes);
+app.use('/api', multipartRoutes);
 
 app.get('/getcourselist/user', (req, res) => {
   UserId = db.iterate('users').find(req.user).userId;
